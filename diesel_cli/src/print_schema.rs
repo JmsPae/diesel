@@ -563,9 +563,16 @@ impl<'a> Display for TableDefinition<'a> {
             let mut out = PadAdapter::new(f);
             writeln!(out)?;
 
+            let mut already_imported_custom_types: HashSet<&str> = HashSet::new();
             let mut has_written_import = false;
             if let Some(types) = self.import_types {
                 for import in types {
+                    if let Some(import_type) = import.split("::").last() {
+                        if import_type != "*" {
+                            already_imported_custom_types.insert(import_type);
+                        }
+                    }
+
                     writeln!(out, "use {import};")?;
                     has_written_import = true;
                 }
@@ -573,7 +580,6 @@ impl<'a> Display for TableDefinition<'a> {
 
             #[cfg(any(feature = "mysql", feature = "postgres"))]
             {
-                let mut already_imported_custom_types: HashSet<&str> = HashSet::new();
                 for ct in self
                     .custom_type_overrides
                     .iter()
